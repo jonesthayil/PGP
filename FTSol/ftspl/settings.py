@@ -1,14 +1,19 @@
 from pathlib import Path
 from ftplib import FTP
 import gnupg
+import os, shutil
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 rootpath = str(BASE_DIR)
 
-keypath = rootpath + '\gnupg'
+keypath = rootpath + '\\gnupg'
 
 mediapath = rootpath + '\\media'
+
+enypath = mediapath + '\\encrypted'
+
+sigpath = mediapath + '\\signatures'
 
 SECRET_KEY = 'django-insecure-cp(f5f=-om-0@sgb!5xaa-!sn1^(xtagl4bdn01o3-6lx=-#pw'
 
@@ -99,10 +104,15 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # PGP Settings
-Email = 'jones.thayil@gmail.com'
-Passkey = 'Pass@123'
-Type = 'RSA'
-Length = '1024'
+S_Email = 'jones.thayil@gmail.com'
+S_Passkey = 'Pass@123'
+S_Type = 'RSA'
+S_Length = '2048'
+
+C_Email = 'jones.thayil@outlook.com'
+C_Passkey = 'Pass@123'
+C_Type = 'RSA'
+C_Length = '2048'
 
 # FTP Settings
 ftp = ''
@@ -115,18 +125,37 @@ ftp.login(user='u399571136.maulisaidevelopers.com', passwd='Pass@123')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 gpg = gnupg.GPG(gnupghome=keypath)
+gpg.encoding = 'utf-8'
 
+print('Deleting Old Keys')
+shutil.rmtree(keypath)
+shutil.rmtree(mediapath)
+os.makedirs(keypath)
+os.makedirs(mediapath)
+os.makedirs(enypath)
+os.makedirs(sigpath)
 
-def generatekey(Email, Passkey, Type, Length):
-    gpg.encoding = 'utf-8'
-    input_data = gpg.gen_key_input(
-        name_email=Email,
-        passphrase=Passkey,
-        key_type=Type,
-        key_length=Length,
-    )
+S_Key = ''
+C_Key = ''
+
+def generatekey(ftype='Client'):
+    if ftype == 'Server':
+        input_data = gpg.gen_key_input(
+            name_email=S_Email,
+            passphrase=S_Passkey,
+            key_type=S_Type,
+            key_length=S_Length,
+        )
+    else:
+        input_data = gpg.gen_key_input(
+            name_email=C_Email,
+            passphrase=C_Passkey,
+            key_type=C_Type,
+            key_length=C_Length,
+        )
     newkey = gpg.gen_key(input_data)
-    print(str(newkey))
+    if DEBUG: print(newkey)
+    return str(newkey)
 
-
-# generatekey(Email, Passkey, Type, Length)
+S_Key = generatekey('Server')
+C_Key = generatekey()

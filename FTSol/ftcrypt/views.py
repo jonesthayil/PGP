@@ -3,9 +3,10 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from ftspl.settings import mediapath, gpg, Email, ftp
+from ftspl.settings import mediapath, gpg, C_Email, ftp, S_Key, S_Key, S_Passkey
 from .serializers import FTCRYPTSerializer
-
+import os
+import gnupg
 
 class ECRTFILE(APIView):
     parser_classes = (MultiPartParser, FormParser)
@@ -24,12 +25,15 @@ class ECRTFILE(APIView):
 
 # Encrypt & FTP
 def ftecrt(filename):
-    with open(mediapath + filename, 'rb') as f:
-        resultfile = mediapath + filename.split(".")[0] + ".encrypted"
-        status = gpg.encrypt_file(
-            f, recipients=[Email], output=resultfile)
-        print(status.ok)
-        print(status.stderr)
+    sigfile = mediapath + "\\signatures" + filename.split(".")[0] + ".sig"
+    resultfile = mediapath + "\\encrypted" + filename.split(".")[0] + ".gpg"
+    f = ''
+    with open(mediapath + filename, 'r') as file:
+        f = file.read()
+    status = gpg.encrypt(f, recipients=[C_Email], sign=S_Key, passphrase=S_Passkey,output=resultfile)
+    print("ok: ", status.ok)
+    print("status: ", status.status)
+    print("stderr: ", status.stderr)
     # ftp.storbinary('STOR ' + resultfile, open(resultfile, 'rb'))
     # ftp.quit()
     return str(resultfile)
