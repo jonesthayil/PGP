@@ -1,10 +1,10 @@
-from FTSol.ftspl.settings import mediapath, gpg, Email, ftp
-from rest_framework.views import APIView
+from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework.views import APIView
+
+from FTSol.ftspl.settings import mediapath, gpg, Email, ftp
 from .serializers import FTCRYPTSerializer
-import os
 
 
 class ECRTFILE(APIView):
@@ -15,7 +15,7 @@ class ECRTFILE(APIView):
         if file_serializer.is_valid():
             obj = file_serializer.save()
             ecrtfile = ftecrt('\\' + str(obj))
-            os.remove(ecrtfile)
+            # os.remove(ecrtfile)
             obj.delete()
             return Response(ecrtfile, status=status.HTTP_200_OK)
         else:
