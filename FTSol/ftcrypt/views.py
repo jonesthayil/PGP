@@ -3,7 +3,7 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from FTSol.ftspl.settings import mediapath, gpg, Email, ftp
+from ftspl.settings import mediapath, gpg, Email, ftp
 from .serializers import FTCRYPTSerializer
 
 
