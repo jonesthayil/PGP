@@ -105,6 +105,7 @@ Type = 'RSA'
 Length = '1024'
 
 # FTP Settings
+ftp = ''
 '''
 ftp = FTP("46.17.172.192")
 ftp.login(user='u399571136.maulisaidevelopers.com', passwd='Pass@123')

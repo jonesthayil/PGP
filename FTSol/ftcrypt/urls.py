@@ -1,9 +1,8 @@
 from django.urls import path
 from ftcrypt import views
 from django.conf.urls import url
-from .views import MyUploadView
+from .views import ECRTFILE
 
 urlpatterns = [
-    path('', views.ecrtfile, name='ecrtfile'),
-    url('asdasd/', MyUploadView.as_view(), name='upload'),
+    url('', ECRTFILE.as_view(), name='file-upload'),
 ]
