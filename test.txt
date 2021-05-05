@@ -4,26 +4,3 @@ media folder empty
 encrptyed file
 stopping localhost
 dcpypt function
-FTP disabled in code
-
-Complete settings
-
-
-1. Read text file as binary data ... no need to upload file
-2. need sign of data after encryption, Do encryption and sign in one go
-
-
-
-Ok sir I will read file as binar data
-
-
-
-encppt with selff private key 
-and sign with other public
-
-
-binary data + apna private key
-sign bank public key
-
-bank private verify
-decrpty public key
