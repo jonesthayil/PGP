@@ -1,8 +1,8 @@
+import paramiko
 from datetime import datetime
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from ftspl.settings import DEBUG, mediapath, gpg, KeyPhrase, S_fp, recipient, C_fp
-from sftp_py.transfer import RemoteTransfer
 
 
 @csrf_exempt
@@ -25,10 +25,13 @@ def ftecrt(data, filename):
     if C_fp:
         status = gpg.encrypt(data, recipients=C_fp, sign=S_fp, passphrase=KeyPhrase,
                              armor=False, always_trust=True, output=filename)
-        conn = RemoteTransfer(host="150.105.184.107", username="AARTIINDUSTRIE", port=22, key="w0bo5qz9D0")
-        conn.connect()
-        conn.remote_upload("/", filename, remove=True)
-        conn.disconnect()
+        ssh = paramiko.SSHClient()
+        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh.connect(hostname='test.rebex.net',username='demo',password='password')
+        ftp_client=ssh.open_sftp()
+        ftp_client.put(filename,'/')
+        ftp_client.close()
+        ssh.close()
         if DEBUG: print("ok: \n", status.ok, "status: \n", status.status, "stderr: \n", status.stderr)
     else:
         print("error")
