@@ -27,13 +27,5 @@ for dirfile in os.listdir(mediapath):
         with open(mediapath + '\\' + dirfile, 'rb') as file:
             data = file.read()
             decrypted_data = gpg.decrypt(data, always_trust=True, passphrase=smart_key)
-            # status = gpg.decrypt(data, passphrase=smart_key, output=resultfile)
-            if decrypted_data.trust_level is not None and decrypted_data.trust_level >= decrypted_data.TRUST_FULLY:
-                print('Trust level: %s' % decrypted_data.trust_text)
-                status = gpg.decrypt(data, passphrase=smart_key, always_trust=True, output=resultfile)
-                print(status.ok)
-                print(status.stderr)
-            else:
-                print("Username :",decrypted_data.username, "\nkey_id :", decrypted_data.key_id, "\nsignature_id :",
-                      decrypted_data.signature_id, "\nfingerprint :", decrypted_data.fingerprint, "\ntrust_level :",
-                      decrypted_data.trust_level , "\ntrust_text :", decrypted_data.trust_text)
+            status = gpg.decrypt(data, passphrase=smart_key, output=resultfile)
+            

@@ -1,6 +1,5 @@
 import gnupg, os, glob, shutil
 from pathlib import Path
-from ftplib import FTP
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 rootpath = str(BASE_DIR)
@@ -103,13 +102,6 @@ else:
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# FTP Settings
-FTPHost = "150.105.184.107"
-FTPUser = "AARTIINDUSTRIE"
-FTPPwd = "w0bo5qz9D0"
-FTPPort = ""
-FTPDir = "/"
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # PGP Settings
@@ -133,14 +125,12 @@ gpg.encoding = 'utf-8'
 # Generate server fingerprint if not present
 dirlen = len(os.listdir(pvtpath))
 keycount = len(glob.glob1(exppath, "*.key"))
-if dirlen > 1 and keycount > 1:
-    if keycount < 2:
-        key = gpg.list_keys(True)
-    else:
-        shutil.rmtree(pvtpath)
-        os.makedirs(pvtpath)
-        shutil.rmtree(pubpath)
-        os.makedirs(pubpath)
+if dirlen > 0 and keycount > 0:
+    for dirfiles in os.listdir(exppath):
+        if dirfiles.endswith(".asc"):
+            with open(exppath + '\\' + dirfiles, 'r') as file:
+                f = file.read()
+                imported_key = gpg.import_keys(f)
 else:
     input_data = gpg.gen_key_input(key_type=KeyType, key_length=KeyLen, name_real=UserKey, name_comment=Comment,
                                    name_email=EmailKey, passphrase=KeyPhrase)
