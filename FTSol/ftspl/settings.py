@@ -1,19 +1,19 @@
+import gnupg, os, glob, shutil
 from pathlib import Path
 from ftplib import FTP
-import gnupg
-import os, shutil
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 rootpath = str(BASE_DIR)
-
+# Server Key Directory
 keypath = rootpath + '\\gnupg'
-
+pvtpath = keypath + '\\private-keys-v1.d'
+pubpath = keypath + '\\openpgp-revocs.d'
+# Public Key Backups for In,Ex-port
+imppath = rootpath + '\\import_key'
+exppath = rootpath + '\\export_key'
+pubkey = exppath + '\\pub_key.asc'
+# Encrypt file location
 mediapath = rootpath + '\\media'
-
-enypath = mediapath + '\\encrypted'
-
-sigpath = mediapath + '\\signatures'
 
 SECRET_KEY = 'django-insecure-cp(f5f=-om-0@sgb!5xaa-!sn1^(xtagl4bdn01o3-6lx=-#pw'
 
@@ -103,59 +103,73 @@ else:
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
-# PGP Settings
-S_Email = 'jones.thayil@gmail.com'
-S_Passkey = 'Pass@123'
-S_Type = 'RSA'
-S_Length = '2048'
-
-C_Email = 'jones.thayil@outlook.com'
-C_Passkey = 'Pass@123'
-C_Type = 'RSA'
-C_Length = '2048'
-
 # FTP Settings
-ftp = ''
-'''
-ftp = FTP("46.17.172.192")
-ftp.login(user='u399571136.maulisaidevelopers.com', passwd='Pass@123')
-# ftp.cwd('/www/')
-'''
+FTPHost = "150.105.184.107"
+FTPUser = "AARTIINDUSTRIE"
+FTPPwd = "w0bo5qz9D0"
+FTPPort = ""
+FTPDir = "/"
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-gpg = gnupg.GPG(gnupghome=keypath)
+# PGP Settings
+EmailKey = "jones.thayil@gmail.com"
+KeyPhrase = 'Pass@123'
+KeyType = "RSA"
+KeyLen = "2048"
+UserKey = "FTSPL Server"
+Comment = "RSA 2048"
+keyext = ('.key',)
+
+# Auto-Key Management Program
+if DEBUG:
+    shutil.rmtree(keypath)
+    os.makedirs(keypath)
+    os.makedirs(pvtpath)
+    os.makedirs(pubpath)
+gpg = gnupg.GPG(gnupghome=keypath, verbose=False)
 gpg.encoding = 'utf-8'
 
-print('Deleting Old Keys')
-shutil.rmtree(keypath)
-shutil.rmtree(mediapath)
-os.makedirs(keypath)
-os.makedirs(mediapath)
-os.makedirs(enypath)
-os.makedirs(sigpath)
-
-S_Key = ''
-C_Key = ''
-
-def generatekey(ftype='Client'):
-    if ftype == 'Server':
-        input_data = gpg.gen_key_input(
-            name_email=S_Email,
-            passphrase=S_Passkey,
-            key_type=S_Type,
-            key_length=S_Length,
-        )
+# Generate server fingerprint if not present
+dirlen = len(os.listdir(pvtpath))
+keycount = len(glob.glob1(exppath, "*.key"))
+if dirlen > 1 and keycount > 1:
+    if keycount < 2:
+        key = gpg.list_keys(True)
     else:
-        input_data = gpg.gen_key_input(
-            name_email=C_Email,
-            passphrase=C_Passkey,
-            key_type=C_Type,
-            key_length=C_Length,
-        )
-    newkey = gpg.gen_key(input_data)
-    if DEBUG: print(newkey)
-    return str(newkey)
+        shutil.rmtree(pvtpath)
+        os.makedirs(pvtpath)
+        shutil.rmtree(pubpath)
+        os.makedirs(pubpath)
+else:
+    input_data = gpg.gen_key_input(key_type=KeyType, key_length=KeyLen, name_real=UserKey, name_comment=Comment,
+                                   name_email=EmailKey, passphrase=KeyPhrase)
+    key = gpg.gen_key(input_data)
+    shutil.rmtree(exppath)
+    os.makedirs(exppath)
+    ascii_armored_public_keys = gpg.export_keys(key.fingerprint)
+    with open(pubkey, 'w') as f:
+        f.write(ascii_armored_public_keys)
+S_fp = key.fingerprint
+# if DEBUG: print("Key :\n", key)
 
-S_Key = generatekey('Server')
-C_Key = generatekey()
+# Getting client fingerprint if present
+recipient = None
+keycount = len(glob.glob1(imppath, "*.asc"))
+if keycount == 1:
+    for dirfiles in os.listdir(imppath):
+        if dirfiles.endswith(".asc"):
+            with open(imppath + '\\' + dirfiles, 'r') as file:
+                f = file.read()
+                imported_key = gpg.import_keys(f)
+                gpg.trust_keys(gpg.list_keys()[1]['fingerprint'], 'TRUST_FULLY')
+    if DEBUG: print(gpg.list_keys())
+    C_fp = gpg.list_keys()[1]['fingerprint']
+    if DEBUG: print(C_fp)
+else:
+    shutil.rmtree(imppath)
+    os.makedirs(imppath)
+
+# refresh media directory
+shutil.rmtree(mediapath)
+os.makedirs(mediapath)

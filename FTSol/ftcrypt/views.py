@@ -1,63 +1,36 @@
 from datetime import datetime
-
-from rest_framework import status
-from rest_framework.parsers import MultiPartParser, FormParser
-from rest_framework.response import Response
-from rest_framework.views import APIView
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-# from django.middleware.csrf import get_token
+from ftspl.settings import DEBUG, mediapath, gpg, FTPHost, FTPUser, FTPPwd, FTPPort, FTPDir, KeyPhrase, S_fp, recipient, C_fp
 
-from ftspl.settings import mediapath, gpg, C_Email, ftp, S_Key, S_Key, S_Passkey
-from .serializers import FTCRYPTSerializer
-import os
-import gnupg
 
 @csrf_exempt
 def ecrtfil(request):
-    result = 'Post Binary Data...'
+    resultfile = 'Please Post your Binary Data...'
+    ftpstatus = ''
     if request.method == 'POST':
         f = str(request.body).split("'")[1]
-        result = ftecrt(f)
-    return HttpResponse(result)
-
-class ECRTFILE(APIView):
-    parser_classes = (MultiPartParser, FormParser)
-
-    def post(self, request, *args, **kwargs):
-        file_serializer = FTCRYPTSerializer(data=request.data)
-        if file_serializer.is_valid():
-            obj = file_serializer.save()
-            ecrtfile = ftecrt('\\' + str(obj))
-            # os.remove(ecrtfile)
-            obj.delete()
-            return Response(ecrtfile, status=status.HTTP_200_OK)
-        else:
-            return Response(file_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        g = request.body
+        print(type(f),type(g))
+        filestamp = datetime.now().strftime("%Y%m%d%H%M%S%f")
+        resultfile = mediapath + "\\" + str(filestamp) + ".gpg"
+        resultfile, log = ftecrt(f, resultfile)
+    return HttpResponse(resultfile, log)
 
 
 # Encrypt & FTP
-def ftecrt(filename):
-    sigfile = mediapath + "\\signatures" + filename.split(".")[0] + ".sig"
-    resultfile = mediapath + "\\encrypted" + filename.split(".")[0] + ".gpg"
-    f = ''
-    with open(mediapath + filename, 'r') as file:
-        f = file.read()
-    status = gpg.encrypt(f, recipients=[C_Email], sign=S_Key, passphrase=S_Passkey,output=resultfile)
-    print("ok: ", status.ok)
-    print("status: ", status.status)
-    print("stderr: ", status.stderr)
+def ftecrt(data, filename):
+    log = {'ftp': 'FTP Transfer : Success'}
+    if C_fp:
+        status = gpg.encrypt(data, recipients=C_fp, sign=S_fp, passphrase=KeyPhrase,
+                             armor=False, always_trust=True, output=filename)
+        if DEBUG: print("ok: \n", status.ok, "status: \n", status.status, "stderr: \n", status.stderr)
+    else:
+        print("error")
+        log.update({'public Key': 'No Public Key Found. Please import keys...'})
+    # ftp = FTP(FTPHost)
+    # ftp.login(user=FTPUser, passwd=FTPPwd)
+    # ftp.cwd(FTPDir)
     # ftp.storbinary('STOR ' + resultfile, open(resultfile, 'rb'))
     # ftp.quit()
-    return str(resultfile)
-
-def ftecrt(f):
-    formatedDate = datetime.now().strftime("%Y%m%d%H%M%S%f")
-    resultfile = mediapath + "\\encrypted\\" + str(formatedDate) + ".txt"
-    status = gpg.encrypt(f, recipients=[C_Email], sign=S_Key, passphrase=S_Passkey,output=resultfile)
-    print("ok: ", status.ok)
-    print("status: ", status.status)
-    print("stderr: ", status.stderr)
-    # ftp.storbinary('STOR ' + resultfile, open(resultfile, 'rb'))
-    # ftp.quit()
-    return str(resultfile)
+    return filename, log

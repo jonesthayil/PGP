@@ -163,3 +163,5 @@ Thumbs.db
 web.config
 .vscode
 gnupg/
+*.asc
+*.old
