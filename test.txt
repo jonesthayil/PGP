@@ -1,6 +1,0 @@
-Localhost activated
-.sending file to api
-media folder empty
-encrptyed file
-stopping localhost
-dcpypt function

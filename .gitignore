@@ -165,3 +165,4 @@ web.config
 gnupg/
 *.asc
 *.old
+.idea

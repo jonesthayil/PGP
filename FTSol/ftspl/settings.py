@@ -104,62 +104,21 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# PGP Settings
-EmailKey = "jones.thayil@gmail.com"
-KeyPhrase = 'Pass@123'
-KeyType = "RSA"
-KeyLen = "2048"
-UserKey = "FTSPL Server"
-Comment = "RSA 2048"
-keyext = ('.key',)
-
-# Auto-Key Management Program
-if DEBUG:
-    shutil.rmtree(keypath)
-    os.makedirs(keypath)
-    os.makedirs(pvtpath)
-    os.makedirs(pubpath)
 gpg = gnupg.GPG(gnupghome=keypath, verbose=False)
 gpg.encoding = 'utf-8'
 
-# Generate server fingerprint if not present
-dirlen = len(os.listdir(pvtpath))
-keycount = len(glob.glob1(exppath, "*.key"))
-if dirlen > 0 and keycount > 0:
-    for dirfiles in os.listdir(exppath):
-        if dirfiles.endswith(".asc"):
-            with open(exppath + '\\' + dirfiles, 'r') as file:
-                f = file.read()
-                imported_key = gpg.import_keys(f)
-else:
-    input_data = gpg.gen_key_input(key_type=KeyType, key_length=KeyLen, name_real=UserKey, name_comment=Comment,
-                                   name_email=EmailKey, passphrase=KeyPhrase)
-    key = gpg.gen_key(input_data)
-    shutil.rmtree(exppath)
-    os.makedirs(exppath)
-    ascii_armored_public_keys = gpg.export_keys(key.fingerprint)
-    with open(pubkey, 'w') as f:
-        f.write(ascii_armored_public_keys)
-S_fp = key.fingerprint
-# if DEBUG: print("Key :\n", key)
+# Importing client keys from import_key folder
+with open(imppath + '\\CITI_public_key_CPGP_GXS_2048_20221208.asc', 'r') as file:
+    f = file.read()
+    imported_key = gpg.import_keys(f)
+    gpg.trust_keys(gpg.list_keys()[0]['fingerprint'], 'TRUST_FULLY')
+    print(gpg.list_keys()[0]['fingerprint'])
+    C_fp = gpg.list_keys()[0]['fingerprint']
 
-# Getting client fingerprint if present
-recipient = None
-keycount = len(glob.glob1(imppath, "*.asc"))
-if keycount == 1:
-    for dirfiles in os.listdir(imppath):
-        if dirfiles.endswith(".asc"):
-            with open(imppath + '\\' + dirfiles, 'r') as file:
-                f = file.read()
-                imported_key = gpg.import_keys(f)
-                gpg.trust_keys(gpg.list_keys()[1]['fingerprint'], 'TRUST_FULLY')
-    if DEBUG: print(gpg.list_keys())
-    C_fp = gpg.list_keys()[1]['fingerprint']
-    if DEBUG: print(C_fp)
-else:
-    shutil.rmtree(imppath)
-    os.makedirs(imppath)
-
-# refresh media directory
-shutil.rmtree(mediapath)
-os.makedirs(mediapath)
+# Importing server keys from export_key folder
+with open(exppath + '\\pgp_private_key.asc', 'r') as file:
+    f = file.read()
+    imported_key = gpg.import_keys(f)
+    gpg.trust_keys(gpg.list_keys()[1]['fingerprint'], 'TRUST_FULLY')
+    print(gpg.list_keys()[1]['fingerprint'])
+    S_fp = gpg.list_keys()[1]['fingerprint']

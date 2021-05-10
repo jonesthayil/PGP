@@ -21,11 +21,14 @@ for dirfiles in os.listdir(imppath):
             print(imported_key)
 gpg.trust_keys(gpg.list_keys()[1]['fingerprint'], 'TRUST_FULLY')
 
-ext = ('.gpg',)
+ext = ('.txt',)
 for dirfile in os.listdir(mediapath):
     if dirfile.endswith(ext):
         with open(mediapath + '\\' + dirfile, 'rb') as file:
             data = file.read()
             decrypted_data = gpg.decrypt(data, always_trust=True, passphrase=smart_key)
-            status = gpg.decrypt(data, passphrase=smart_key, output=resultfile)
-            
+            status = gpg.decrypt(data, always_trust=True, passphrase=smart_key, output=resultfile)
+            print("ok: ", status.ok)
+            print("status: ", status.status)
+            print("stderr: ", status.stderr)
+
