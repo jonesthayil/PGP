@@ -1,6 +1,6 @@
-import paramiko
 import os
 from datetime import datetime
+import paramiko
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from ftspl.settings import mediapath, gpg, S_fp, C_fp
@@ -21,7 +21,7 @@ def ecrtfil(request):
 
 # Encrypt & FTP
 def ftecrt(data, filename, fname):
-    remotepath = "//AARTIINDUSTRIE//"
+    remotepath = "//AARTIINDUSTRIE//TEST//"
     if C_fp:
         status = gpg.encrypt(data, recipients=C_fp, sign=S_fp, passphrase='pass1234',
                              armor=True, always_trust=True, output=filename)
